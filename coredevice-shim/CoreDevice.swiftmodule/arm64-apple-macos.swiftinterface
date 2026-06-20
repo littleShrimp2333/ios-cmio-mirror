@@ -1,0 +1,115 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.3.2
+// swift-module-flags: -target arm64-apple-macosx26.0 -enable-library-evolution -module-name CoreDevice
+import Foundation
+import Dispatch
+import CoreDeviceProtocols
+import RemoteXPCShim
+
+public class DeviceManager {
+  public static var shared: CoreDevice.DeviceManager { get }
+  public func awaitFullInitialization() async
+  public final func allDevices() -> [CoreDevice.RemoteDevice]
+}
+
+public class RemoteDevice: Swift.CustomStringConvertible {
+  public final var description: Swift.String { get }
+  public var deviceIdentifier: Foundation.UUID { get }
+  public var deviceInfo: CoreDeviceProtocols.DeviceInfo { get }
+  public func viewScreen() async throws -> CoreDevice.ProcessToken
+  public final var mediaStreamSupportInfo: CoreDevice.DeviceMediaStream.SupportInfoResponse { get async throws }
+  public final var mediaStreamServerStatus: CoreDevice.DeviceMediaStream.DeviceServerInfo { get async throws }
+  public final func getMediaStreamSupportInfo(completingOn: Dispatch.DispatchQueue?, completion: @escaping (Swift.Result<CoreDevice.DeviceMediaStream.SupportInfoResponse, Swift.Error>) -> Swift.Void)
+  public final func getMediaStreamServerStatus(completingOn: Dispatch.DispatchQueue?, completion: @escaping (Swift.Result<CoreDevice.DeviceMediaStream.DeviceServerInfo, Swift.Error>) -> Swift.Void)
+  public func getImplementation<A>(for capability: CoreDevice.CapabilityStaticMember<A>) async throws -> A.ProtocolType where A : CoreDevice.DeviceCapability
+  public func supports<A>(_ capability: CoreDevice.CapabilityStaticMember<A>) -> Swift.Bool where A : CoreDevice.DeviceCapability
+  public func remoteXPCConnection(toServiceNamed serviceName: Swift.String, connectionMode: Swift.UInt64, handlingEventsOn queue: Dispatch.DispatchQueue) async throws -> RemoteXPCShim.xpc_remote_connection_t
+  public func remoteXPCConnection(toFeatureIdentifiedBy featureIdentifier: Swift.String, connectionMode: Swift.UInt64, handlingEventsOn queue: Dispatch.DispatchQueue) async throws -> RemoteXPCShim.xpc_remote_connection_t
+}
+
+public protocol DeviceCapabilityProtocol {
+  static var capability: CoreDevice.Capability { get }
+  static var identifier: Swift.String { get }
+  static var identifierSuffix: Swift.String { get }
+  static var priority: Swift.Int { get }
+}
+
+public protocol DeviceCapability {
+  associatedtype ProtocolType
+  associatedtype ImplType
+  static var capability: CoreDevice.Capability { get }
+}
+
+public protocol DeviceCapabilityImplementation : CoreDevice.DeviceCapabilityProtocol {
+  static func makeImplementation(for device: CoreDevice.RemoteDevice) async throws -> any CoreDevice.DeviceCapabilityImplementation
+}
+
+public struct CapabilityStaticMember<A> {
+  public init()
+}
+
+extension CoreDevice.CapabilityStaticMember where A : CoreDevice.DeviceCapability {
+  public static var createServiceConnection: CoreDevice.CapabilityStaticMember<CoreDevice.CreateServiceConnectionCapability> { get }
+  public static var createServiceSocket: CoreDevice.CapabilityStaticMember<CoreDevice.CreateServiceSocketCapability> { get }
+}
+
+public struct Capability {}
+
+public protocol CreateServiceSocketProtocol : CoreDevice.DeviceCapabilityProtocol {
+  func fileHandleToServiceHub() async throws -> Foundation.FileHandle
+  func fileHandle(toServiceNamed serviceName: Swift.String) async throws -> Foundation.FileHandle
+  func fileHandle(toFeatureIdentifiedBy featureIdentifier: Swift.String) async throws -> Foundation.FileHandle
+}
+
+public struct CreateServiceSocketCapability : CoreDevice.DeviceCapability {
+  public typealias ProtocolType = any CoreDevice.CreateServiceSocketProtocol
+  public typealias ImplType = any CoreDevice.DeviceCapabilityImplementation
+  public static var capability: CoreDevice.Capability { get }
+}
+
+public protocol CreateServiceConnectionProtocol : CoreDevice.DeviceCapabilityProtocol {
+  func remoteXPCConnection(toServiceNamed serviceName: Swift.String, connectionMode: Swift.UInt64, handlingEventsOn queue: Dispatch.DispatchQueue) async throws -> RemoteXPCShim.xpc_remote_connection_t
+  func remoteXPCConnection(toFeatureIdentifiedBy featureIdentifier: Swift.String, connectionMode: Swift.UInt64, handlingEventsOn queue: Dispatch.DispatchQueue) async throws -> RemoteXPCShim.xpc_remote_connection_t
+}
+
+public struct CreateServiceConnectionCapability : CoreDevice.DeviceCapability {
+  public typealias ProtocolType = any CoreDevice.CreateServiceConnectionProtocol
+  public typealias ImplType = any CoreDevice.DeviceCapabilityImplementation
+  public static var capability: CoreDevice.Capability { get }
+}
+
+public struct ScreenViewingURLHelper {
+  public enum ScreenViewingURLType : Swift.String {
+    case preferred
+    case VNC
+    case Devices
+  }
+
+  public static func url(for deviceInfo: CoreDeviceProtocols.DeviceInfo, withType type: CoreDevice.ScreenViewingURLHelper.ScreenViewingURLType) -> Foundation.URL?
+}
+
+public struct ProcessToken: Swift.CustomStringConvertible {
+  public var description: Swift.String { get }
+}
+
+public struct DeviceMediaStream {
+  public struct SupportInfo: Swift.CustomStringConvertible {
+    public var supportedFeatures: Swift.UInt64 { get }
+    public var supportedFeaturesDescription: Swift.String { get }
+    public var avcFrameworkVersion: Swift.String? { get }
+    public var coreDeviceVersion: Swift.String? { get }
+    public var description: Swift.String { get }
+  }
+  public struct SupportInfoResponse {
+    public var device: CoreDevice.DeviceMediaStream.SupportInfo { get }
+    public var client: CoreDevice.DeviceMediaStream.SupportInfo { get }
+    public var common: CoreDevice.DeviceMediaStream.SupportInfo { get }
+  }
+  public struct DeviceServerInfo {}
+}
+
+public struct MediaStreamFunctions {
+  public init(device: CoreDevice.RemoteDevice)
+  public var mediaStreamSupportInfo: CoreDevice.DeviceMediaStream.SupportInfoResponse { get async throws }
+  public var mediaStreamServerStatus: CoreDevice.DeviceMediaStream.DeviceServerInfo { get async throws }
+}

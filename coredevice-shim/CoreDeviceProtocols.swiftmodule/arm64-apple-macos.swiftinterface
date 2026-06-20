@@ -1,0 +1,9 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.3.2
+// swift-module-flags: -target arm64-apple-macosx26.0 -enable-library-evolution -module-name CoreDeviceProtocols
+import Foundation
+
+public struct DeviceInfo {
+  public var identifier: Foundation.UUID { get }
+  public var screenViewingURL: Foundation.URL? { get }
+}

@@ -1,0 +1,4 @@
+module RemoteXPCShim {
+  header "RemoteXPCShim.h"
+  export *
+}

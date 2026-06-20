@@ -1,0 +1,56 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.3.2
+// swift-module-flags: -target arm64-apple-macosx26.0 -enable-library-evolution -module-name CoreDeviceMediaStreamSupport
+import CoreDevice
+import Foundation
+import QuartzCore
+
+public protocol MediaStreamConfiguration {
+  var direction: CoreDeviceMediaStreamSupport.MediaStreamDirection { get }
+}
+
+public enum MediaStreamDirection : Swift.UInt32 {
+  case send
+  case receive
+}
+
+public struct VideoStreamReceiveConfiguration {
+  public var resolution: CoreGraphics.CGSize { get }
+}
+
+public struct VideoStreamSendConfiguration {
+  public var resolution: CoreGraphics.CGSize { get }
+}
+
+public enum VideoStreamConfiguration : CoreDeviceMediaStreamSupport.MediaStreamConfiguration {
+  case send(CoreDeviceMediaStreamSupport.VideoStreamSendConfiguration)
+  case receive(CoreDeviceMediaStreamSupport.VideoStreamReceiveConfiguration)
+  public var direction: CoreDeviceMediaStreamSupport.MediaStreamDirection { get }
+  public static func receiveMirroredPrimary(layer: QuartzCore.CALayer, timeout: Swift.UInt) -> CoreDeviceMediaStreamSupport.VideoStreamConfiguration
+}
+
+public struct VideoStreamAttributes {}
+
+public enum VideoStreamEvent {
+  case remoteVideoAttributesChanged(CoreDeviceMediaStreamSupport.VideoStreamAttributes)
+  case receivedLastDecodedFrame(Foundation.Data)
+  case receivedFirstFrame
+}
+
+public protocol MediaStreamProtocol : Swift.Actor {
+  associatedtype Configuration : CoreDeviceMediaStreamSupport.MediaStreamConfiguration
+  associatedtype Event
+  var configuration: Self.Configuration { get }
+  func activate() async throws -> Swift.AsyncThrowingStream<Self.Event, any Swift.Error>
+  func invalidate() async
+}
+
+public protocol VideoStream : CoreDeviceMediaStreamSupport.MediaStreamProtocol where Self.Configuration == CoreDeviceMediaStreamSupport.VideoStreamConfiguration, Self.Event == CoreDeviceMediaStreamSupport.VideoStreamEvent {
+  func requestLastDecodedFrame() async
+}
+
+public actor MediaStreamSession {
+  public final var clientSessionID: Foundation.UUID { get }
+  public init(clientSessionID: Foundation.UUID)
+  public final func makeVideoStream(withConfiguration configuration: CoreDeviceMediaStreamSupport.VideoStreamConfiguration, fromRemoteDevice device: CoreDevice.RemoteDevice) async throws -> any CoreDeviceMediaStreamSupport.VideoStream
+}
